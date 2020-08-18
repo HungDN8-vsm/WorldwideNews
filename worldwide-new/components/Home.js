@@ -10,9 +10,12 @@ import {
   StatusBar,
   Image,
   FlatList,
-  ScrollView,
   ActivityIndicator,
+  Linking,
+  Alert,
 } from 'react-native';
+
+// import LinkingBox from './newsComponents/LinkingBox';
 
 const avatar = require('../assets/avatar.jpg');
 
@@ -44,59 +47,87 @@ const API_KEY = '5e4a5b1359bf4cf0a1bb9a86a81c6a90';
 //   },
 // ];
 
-export default function News() {
+export default function Home() {
   const [isLoading, setLoading] = useState(true);
+  // const [isEndReched, setEndReached] = useState(false);
   const [articles, setArticles] = useState([]);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function getNews() {
       const response = await fetch(
-        'http://newsapi.org/v2/everything?q=bitcoin&sortBy=publishedAt&apiKey=' +
+        'https://newsapi.org/v2/top-headlines?sources=bbc-news,cbc-news,nbc-news,fox-news,mtv-news=&page=' +
+          page +
+          '&pageSize=10&apiKey=' +
           API_KEY
       );
       const jsonData = await response.json();
-      setArticles(jsonData.articles);
+      setArticles(articles.concat(jsonData.articles));
 
       // Lấy dữ liệu xong thì tắt biểu tượng loading
       setLoading(false);
+      // setEndReached(false);
     }
 
     // console.log('Call API');
     getNews();
-  }, []);
+  }, [page]);
+
+  const handleLoadmore = () => {
+    // setEndReached(true);
+    setPage(page + 1);
+    // Alert.alert('eR' + page);
+  };
 
   const renderItem = ({ item }) => (
     <>
-      <Image source={{ uri: item.urlToImage }} style={styles.imageBox} />
+      <TouchableOpacity
+        onPress={() => {
+          Linking.openURL(item.url);
+        }}>
+        <Image source={{ uri: item.urlToImage }} style={styles.imageBox} />
+      </TouchableOpacity>
       <View style={styles.descBox}>
-        <Text style={styles.titleBox} numberOfLines={3}>
-          {item.title}
-        </Text>
-        <Text style={styles.descrip} numberOfLines={2}>
-          {item.description}
-        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            Linking.openURL(item.url);
+          }}>
+          <Text style={styles.titleBox} numberOfLines={3}>
+            {item.title}
+          </Text>
+          <Text style={styles.descrip} numberOfLines={2}>
+            {item.description}
+          </Text>
+        </TouchableOpacity>
         <View style={styles.extra}>
           <Text style={{ color: 'white', fontSize: 11, flex: 1 }}>
-            {item.publishedAt}
+            {item.publishedAt.substring(0, 10)} - {item.author}
           </Text>
-          <FontAwesome5
-            style={{ marginHorizontal: 15 }}
-            name="share-alt"
-            color="white"
-          />
-          <FontAwesome5
-            style={{ marginHorizontal: 15 }}
-            name="bookmark"
-            color="white"
-          />
-          <FontAwesome5
-            style={{ marginLeft: 15 }}
-            name="ellipsis-v"
-            color="white"
-          />
+          <TouchableOpacity>
+            <FontAwesome5
+              style={{ marginHorizontal: 15 }}
+              name="share-alt"
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <FontAwesome5
+              style={{ marginHorizontal: 15 }}
+              name="bookmark"
+              color="white"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity>
+            <FontAwesome5
+              style={{ marginLeft: 15 }}
+              name="ellipsis-v"
+              color="white"
+            />
+          </TouchableOpacity>
         </View>
       </View>
     </>
+    // <LinkingBox item={item} />
   );
 
   return (
@@ -105,9 +136,11 @@ export default function News() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Worldwide News</Text>
-          <Image style={styles.avaImage} source={avatar} />
+          <TouchableOpacity>
+            <Image style={styles.avaImage} source={avatar} />
+          </TouchableOpacity>
         </View>
-        <ScrollView>
+        <TouchableOpacity>
           <View style={styles.weather}>
             <FontAwesome5
               style={{ marginHorizontal: 15 }}
@@ -133,19 +166,21 @@ export default function News() {
               </View>
             </View>
           </View>
-          <View style={styles.content}>
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#white" />
-            ) : (
-              <FlatList
-                data={articles}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.url}
-                // showsVerticalScrollIndicator={false}
-              />
-            )}
-          </View>
-        </ScrollView>
+        </TouchableOpacity>
+        <View style={styles.content}>
+          {isLoading ? (
+            <ActivityIndicator size="large" color="#white" />
+          ) : (
+            <FlatList
+              data={articles}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.url}
+              onEndReached={handleLoadmore}
+              onEndReachedThreshold={1}
+              // showsVerticalScrollIndicator={false}
+            />
+          )}
+        </View>
       </SafeAreaView>
     </>
   );

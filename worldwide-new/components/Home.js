@@ -21,40 +21,15 @@ const avatar = require('../assets/avatar.jpg');
 
 const API_KEY = '5e4a5b1359bf4cf0a1bb9a86a81c6a90';
 
-// const DATA = [
-//   {
-//     id: '1',
-//     title:
-//       'ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC',
-//     image: require('../assets/avatar.jpg'),
-//     desc:
-//       'abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc',
-//     publishTime: '41 minutes ago',
-//   },
-//   {
-//     id: '2',
-//     title: 'ABC',
-//     image: require('../assets/avatar.jpg'),
-//     desc: 'abc',
-//     publishTime: '41 minutes ago',
-//   },
-//   {
-//     id: '3',
-//     title: 'ABC',
-//     image: require('../assets/avatar.jpg'),
-//     desc: 'abc',
-//     publishTime: '41 minutes ago',
-//   },
-// ];
-
 export default function Home() {
   const [isLoading, setLoading] = useState(true);
-  // const [isEndReched, setEndReached] = useState(false);
+  const [isLoadmore, setLoadmore] = useState(true);
   const [articles, setArticles] = useState([]);
   const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function getNews() {
+      console.log('GET DATA FROM PAGE: ', page);
       const response = await fetch(
         'https://newsapi.org/v2/top-headlines?sources=bbc-news,cbc-news,nbc-news,fox-news,mtv-news=&page=' +
           page +
@@ -62,11 +37,14 @@ export default function Home() {
           API_KEY
       );
       const jsonData = await response.json();
+      if (jsonData.articles.length == 0) {
+        await setLoadmore(false);
+      }
       setArticles(articles.concat(jsonData.articles));
 
       // Lấy dữ liệu xong thì tắt biểu tượng loading
       setLoading(false);
-      // setEndReached(false);
+      // setLoadmore(false);
     }
 
     // console.log('Call API');
@@ -74,8 +52,11 @@ export default function Home() {
   }, [page]);
 
   const handleLoadmore = () => {
-    // setEndReached(true);
-    setPage(page + 1);
+    // console.log('GETDATA from PAGE ' + page);
+    // setLoadmore(true);
+    if (isLoadmore) {
+      setPage(page + 1);
+    }
     // Alert.alert('eR' + page);
   };
 
@@ -130,6 +111,31 @@ export default function Home() {
     // <LinkingBox item={item} />
   );
 
+  const renderFooter = () => {
+    console.log('renderFooter', isLoadmore);
+    return isLoadmore ? (
+      <ActivityIndicator
+        style={{ marginBottom: 10 }}
+        size="large"
+        color="#white"
+      />
+    ) : (
+      <View
+        style={{
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginBottom: 10,
+        }}>
+        <Text
+          style={{
+            color: 'white',
+          }}>
+          NO MORE NEWS
+        </Text>
+      </View>
+    );
+  };
+
   return (
     <>
       <StatusBar barStyle={'light-content'} />
@@ -177,6 +183,7 @@ export default function Home() {
               keyExtractor={(item) => item.url}
               onEndReached={handleLoadmore}
               onEndReachedThreshold={1}
+              ListFooterComponent={renderFooter}
               // showsVerticalScrollIndicator={false}
             />
           )}
